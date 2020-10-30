@@ -35,16 +35,25 @@ func main() {
 	}
 	c.render(writer)
 
+	var save bool
 	// Loop over user key presses
+mainLoop:
 	for {
 		char, _, err := stdin.ReadRune()
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		if char == 3 { // ^C
+		switch char {
+		case 4: // ^D
+			save = true
+			fallthrough
+		case 3: // ^C
 			retCode = 0
-			break
+			break mainLoop
+		case 63: // ?
+			fmt.Fprintf(writer, "(Help): Press ^C (Ctrl-C) to exit without saving; ^D to save (if using a save file) and exit.\r\nTo relabel a key, press the key to (re)label, press the = key, type in the new label and press enter/return again.\r\nTo subtract from or add more than 1 to a key/label, press the key you wish to add/subtract from, then press either the + or - key, the number you wish you add/subtract then press enter/return.\r\n")
+			continue
 		}
 
 		c.handleRune(char)
@@ -53,9 +62,11 @@ func main() {
 
 	writer.Stop()
 
-	if err = c.writeSave(); err != nil {
-		fmt.Printf("error while saving to %s: %s\n", c.saveFile, err)
-		return
+	if save {
+		if err = c.writeSave(); err != nil {
+			fmt.Printf("error while saving to %s: %s\n", c.saveFile, err)
+			return
+		}
 	}
 
 	retCode = 0

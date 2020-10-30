@@ -12,6 +12,18 @@ import "io/ioutil"
 import "path/filepath"
 import "text/tabwriter"
 
+const (
+	colorReset = "\033[0m"
+
+	colorRed = "\033[31m"
+	colorGreen = "\033[32m"
+	colorYellow = "\033[33m"
+	colorBlue = "\033[34m"
+	colorPurple = "\033[35m"
+	colorCyan = "\033[36m"
+	colorWhite = "\033[37m"
+)
+
 type record struct {
 	Label string
 	Rune rune
@@ -188,17 +200,17 @@ func (c *counter) render(w io.Writer) {
 	case normal:
 	case label:
 		rec := c.state[c.lastRune]
-		display += fmt.Sprintf("- - -\r\nrelabel %s (%s) as: %s\r\n- - -\r\n",
+		display += fmt.Sprintf("relabel %s (%s) as: %s\r\n- - -\r\n",
 			rec.Label, string(c.lastRune), c.label,
 		)
 	case number:
 		rec := c.state[c.lastRune]
 		if c.adding {
-			display += fmt.Sprintf("- - -\r\n%s (%s) = %d + %s\r\n- - -\r\n",
+			display += fmt.Sprintf("%s (%s) = %d + %s\r\n- - -\r\n",
 				rec.Label, string(c.lastRune), rec.Count, c.number,
 			)
 		} else {
-			display += fmt.Sprintf("- - -\r\n%s (%s) = %d - %s\r\n- - -\r\n",
+			display += fmt.Sprintf("%s (%s) = %d - %s\r\n- - -\r\n",
 				rec.Label, string(c.lastRune), rec.Count, c.number,
 			)
 		}
@@ -211,6 +223,8 @@ func (c *counter) render(w io.Writer) {
 	}
 
 	writer := tabwriter.NewWriter(w, 20, 4, 0, []byte(" ")[0], tabwriter.TabIndent)
+
+	display += "\nPress the '?' key for help.\r\n"
 
 	writer.Write([]byte(display))
 
