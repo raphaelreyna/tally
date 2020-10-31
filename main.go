@@ -6,15 +6,43 @@ import "fmt"
 import "bufio"
 import "golang.org/x/crypto/ssh/terminal"
 
+var Version string
+var Date string
+
+type flag uint
+
+const (
+	none flag = iota
+	help
+	version
+)
+
 func main() {
 	retCode := 1
 	defer func() {
 		os.Exit(retCode)
 	}()
 
-	// start dynamically updating the users terminal
-	writer := uilive.New()
-	writer.Start()
+	// Create counter, and get the flag that tells us if the user just wants the help text
+	c, f := newCounter()
+	switch {
+	case f == version:
+		fmt.Printf("version: %s\nibuild date: %s\n", Version, Date)
+		retCode = 0
+		return
+	case f == help:
+		fmt.Printf(`Usage: %s [LABEL]... [FILE]
+Keep track of haw many times a key has been pressed.
+
+Labels passed in as flags must have the form '-x=label' where x is a single character and label is the desired label.
+
+Press ^C (Ctrl-C) to exit without saving; ^D to save (if using a save file) and exit.
+To relabel a key, press the key to (re)label, press the = key, type in the new label and press enter/return again.
+To subtract from or add more than 1 to a key/label, press the key you wish to add/subtract from, then press either the + or - key, the number you wish you add/subtract then press enter/return.
+`, os.Args[0])
+		retCode = 0
+		return
+	}
 
 	// Needed for capturing single character user input
 	oldState, err := terminal.MakeRaw(0)
@@ -25,14 +53,15 @@ func main() {
 	defer terminal.Restore(0, oldState)
 	stdin := bufio.NewReader(os.Stdin)
 
-	// Create counter and show user the initial empty state
-	c := newCounter()
-
 	// Load from save file
 	if err := c.loadSave(); err != nil {
 		fmt.Printf("error while loading from %s: %s\n", c.saveFile, err)
 		return
 	}
+
+	// start dynamically updating the users terminal
+	writer := uilive.New()
+	writer.Start()
 	c.render(writer)
 
 	var save bool

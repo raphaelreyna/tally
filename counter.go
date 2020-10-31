@@ -53,7 +53,7 @@ type counter struct {
 	saveFile string
 }
 
-func newCounter() *counter {
+func newCounter() (*counter, flag) {
 	const regex string = "-([a-zA-Z])=([[:^space:]]+)"
 
 	// Compile regex
@@ -67,6 +67,12 @@ func newCounter() *counter {
 	// Parse flags: extract key:label mapping from flags / args
 	for i, arg := range os.Args {
 		if i == 0 { continue }
+		if arg == "--help" || arg == "-h" || arg == "-help" || arg == "--h" {
+			return nil, help
+		}
+		if arg == "-version" || arg == "-v" || arg == "-version" || arg == "--v" {
+			return nil, version
+		}
 		parts := r.FindStringSubmatch(arg)
 		if len(parts) < 2 {
 			c.saveFile = arg
@@ -78,7 +84,7 @@ func newCounter() *counter {
 	}
 
 
-	return c
+	return c, none
 }
 
 func (c *counter) inc(r rune, by uint64) {

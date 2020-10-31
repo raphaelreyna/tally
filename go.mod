@@ -1,4 +1,4 @@
-module github.com/raphaelreyna/tallyho
+module github.com/raphaelreyna/tally
 
 go 1.14
 
