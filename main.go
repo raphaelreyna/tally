@@ -27,7 +27,7 @@ func main() {
 	c, f := newCounter()
 	switch {
 	case f == version:
-		fmt.Printf("version: %s\nibuild date: %s\n", Version, Date)
+		fmt.Printf("version: %s\nbuild date: %s\n", Version, Date)
 		retCode = 0
 		return
 	case f == help:

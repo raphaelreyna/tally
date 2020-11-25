@@ -121,12 +121,23 @@ func (c *counter) relabel(r rune, new string) {
 	c.state[r].Label = new
 }
 
-func (c *counter) handleRune(r rune) bool {
+func (c *counter) handleRune(r rune) {
 	switch {
+	case r == 8 || r == 127: // ^H or backspace
+		switch c.mode {
+		case normal:
+			return
+		case label:
+			if l := len(c.label); l > 1 {
+				c.label = c.label[:l - 1]
+			}
+		case number:
+			return
+		}
 	case r == 27: // esc key
 		switch c.mode {
 		case normal:
-			return false
+			return
 		case label:
 			c.dec(c.lastRune, 1) // that last one didn't count
 
@@ -137,11 +148,11 @@ func (c *counter) handleRune(r rune) bool {
 			c.mode = normal
 			c.number = ""
 		}
-		return true
+		return
 	case r == 13: // enter/return key
 		switch c.mode {
 		case normal:
-			return false
+			return
 		case label:
 			c.relabel(c.lastRune, c.label)
 			c.dec(c.lastRune, 1) // that last one didn't count
@@ -163,12 +174,12 @@ func (c *counter) handleRune(r rune) bool {
 			c.mode = normal
 			c.number = ""
 		}
-		return true
+		return
 	case r == 61: // = key
 		if c.mode == normal && c.lastRune != 0 {
 			c.mode = label
 			c.label = ""
-			return true
+			return
 		}
 	case r == 43: // + key
 		if c.mode != label && c.lastRune != 0 {
@@ -176,27 +187,29 @@ func (c *counter) handleRune(r rune) bool {
 			c.number = ""
 			c.adding = true
 		}
-		return true
+		return
 	case r == 45: // - key
 		if c.mode != label && c.lastRune != 0 {
 			c.mode = number
 			c.number = ""
 			c.adding = false
 		}
-		return true
+		return
 	case unicode.IsPrint(r):
 		switch {
 		case c.mode == normal:
 			c.inc(r, 1)
 			c.lastRune = r
 		case c.mode == label:
-			c.label += string(r)
+			if len(c.label) < 32 {
+				c.label += string(r)
+			}
 		case c.mode == number && unicode.IsNumber(r):
 			c.number += string(r)
 		}
-		return true
+		return
 	}
-	return false
+	return
 }
 
 func (c *counter) render(w io.Writer) {
